@@ -1,4 +1,6 @@
 package com.daniyal.dto;
 
-public class EncryptResponse {
+public record EncryptResponse (
+        String encrypted
+){
 }

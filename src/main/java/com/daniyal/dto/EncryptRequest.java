@@ -1,4 +1,7 @@
 package com.daniyal.dto;
 
-public record EncryptRequest() {
+public record EncryptRequest(
+        String text,
+        String key
+) {
 }
