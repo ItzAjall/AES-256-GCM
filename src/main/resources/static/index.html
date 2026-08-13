@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AES-256 GCM Tool</title>
+    <!-- Use Inter font for a modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.04);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-highlight: rgba(255, 255, 255, 0.2);
+            --primary: #6366f1;
+            --primary-hover: #8b5cf6;
+            --accent: #ec4899;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: #0f172a; /* Deep slate dark */
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            color-scheme: dark;
+        }
+
+        /* Animated Glowing Blobs Background */
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: -1;
+            opacity: 0.45;
+            animation: pulse 12s infinite alternate ease-in-out;
+        }
+        .blob-1 { width: 450px; height: 450px; background: var(--primary); top: -100px; left: -100px; }
+        .blob-2 { width: 350px; height: 350px; background: var(--accent); bottom: -100px; right: -50px; animation-delay: -6s; }
+        .blob-3 { width: 300px; height: 300px; background: var(--primary-hover); bottom: 10%; left: 15%; animation-delay: -3s; }
+
+        @keyframes pulse {
+            0% { transform: scale(1) translate(0, 0); }
+            100% { transform: scale(1.15) translate(40px, 40px); }
+        }
+
+        /* Glassmorphism Card */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-top: 1px solid var(--glass-highlight);
+            border-left: 1px solid var(--glass-highlight);
+            border-bottom: 1px solid var(--glass-border);
+            border-right: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 540px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            position: relative;
+        }
+
+        /* Headers */
+        .header { text-align: center; margin-bottom: 0.5rem; }
+        .header h1 {
+            margin: 0 0 0.25rem 0;
+            font-size: 1.8rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #fff, var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header p { margin: 0; color: var(--text-muted); font-size: 0.95rem; }
+
+        /* Form Elements */
+        .input-group { display: flex; flex-direction: column; gap: 8px; }
+        .input-header { display: flex; justify-content: space-between; align-items: flex-end; }
+
+        label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input, textarea {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 14px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+            resize: vertical;
+        }
+        input:focus, textarea:focus {
+            border-color: var(--primary-hover);
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        /* Monospace for keys and cipher text */
+        .mono-font { font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            width: 100%;
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.5);
+        }
+        .btn-primary:active:not(:disabled) { transform: translateY(0); }
+        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-main);
+            padding: 0 16px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--glass-highlight);
+        }
+
+        .text-btn {
+            background: none;
+            border: none;
+            color: var(--primary-hover);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0;
+            transition: color 0.2s;
+        }
+        .text-btn:hover { color: var(--accent); }
+
+        /* Tabs System */
+        .tabs-container {
+            display: flex;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 12px;
+            padding: 6px;
+            gap: 4px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            background: var(--glass-highlight);
+            color: var(--text-main);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .section { display: none; }
+        .section.active { display: block; animation: slideUp 0.4s ease forwards; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 14px 24px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+            font-size: 0.95rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            z-index: 1000;
+            animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-highlight);
+        }
+        .toast.success { background: rgba(16, 185, 129, 0.85); }
+        .toast.error { background: rgba(239, 68, 68, 0.85); }
+        .toast.fade-out { opacity: 0; transition: opacity 0.3s ease-out; }
+
+        @keyframes toastIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Ambient Blobs -->
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<div class="glass-card">
+    <div class="header">
+        <h1>AES-256 GCM</h1>
+        <p>Secure Encryption & Decryption API Client</p>
+    </div>
+
+    <!-- Secret Key Management -->
+    <div class="input-group">
+        <div class="input-header">
+            <label>Secret Key (Base64)</label>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <input type="text" id="aesKey" class="mono-font" placeholder="Provide or generate 256-bit Key" />
+            <button class="btn-secondary" onclick="generateKey()" title="Generate New Key">New Key</button>
+            <button class="btn-secondary" onclick="copyValue('aesKey')">Copy</button>
+        </div>
+    </div>
+
+    <!-- Mode Toggles -->
+    <div class="tabs-container">
+        <div class="tab active" id="tab-encrypt" onclick="switchTab('encrypt')">Encrypt</div>
+        <div class="tab" id="tab-decrypt" onclick="switchTab('decrypt')">Decrypt</div>
+    </div>
+
+    <!-- Encrypt View -->
+    <div class="section active" id="section-encrypt">
+        <div class="input-group">
+            <label>Plaintext</label>
+            <textarea id="encryptInput" rows="3" placeholder="Enter text to encrypt..."></textarea>
+        </div>
+        <br>
+        <button class="btn-primary" onclick="encryptData()" id="btn-encrypt">Encrypt Payload</button>
+
+        <div class="input-group" style="margin-top: 1.5rem;">
+            <div class="input-header">
+                <label>Ciphertext Output</label>
+                <button class="text-btn" onclick="copyValue('encryptOutput')">Copy</button>
+            </div>
+            <textarea id="encryptOutput" class="mono-font" rows="3" readonly placeholder="Encrypted payload (IV + Ciphertext + Tag)"></textarea>
+        </div>
+    </div>
+
+    <!-- Decrypt View -->
+    <div class="section" id="section-decrypt">
+        <div class="input-group">
+            <label>Ciphertext (Base64)</label>
+            <textarea id="decryptInput" class="mono-font" rows="3" placeholder="Enter Base64 ciphertext..."></textarea>
+        </div>
+        <br>
+        <button class="btn-primary" onclick="decryptData()" id="btn-decrypt">Decrypt Payload</button>
+
+        <div class="input-group" style="margin-top: 1.5rem;">
+            <div class="input-header">
+                <label>Plaintext Output</label>
+                <button class="text-btn" onclick="copyValue('decryptOutput')">Copy</button>
+            </div>
+            <textarea id="decryptOutput" rows="3" readonly placeholder="Decrypted plaintext result..."></textarea>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Adjust if serving from a different host or running locally:
+    const API_BASE_URL = window.location.hostname === 'localhost' && window.location.port !== '8080'
+        ? "http://localhost:8080/api/crypto"
+        : "/api/crypto";
+
+    /* --- UI Interactions --- */
+    function switchTab(tab) {
+        document.getElementById('tab-encrypt').classList.toggle('active', tab === 'encrypt');
+        document.getElementById('tab-decrypt').classList.toggle('active', tab === 'decrypt');
+        document.getElementById('section-encrypt').classList.toggle('active', tab === 'encrypt');
+        document.getElementById('section-decrypt').classList.toggle('active', tab === 'decrypt');
+    }
+
+    function showToast(message, isError = false) {
+        const toast = document.createElement('div');
+        toast.className = `toast ${isError ? 'error' : 'success'}`;
+        toast.innerText = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add('fade-out');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    function copyValue(elementId) {
+        const el = document.getElementById(elementId);
+        if (!el.value) return;
+        navigator.clipboard.writeText(el.value).then(() => {
+            showToast("Copied to clipboard!");
+        }).catch(() => {
+            showToast("Failed to copy", true);
+        });
+    }
+
+    /* --- API Handling --- */
+    async function fetchApi(endpoint, body = null) {
+        const options = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        };
+        if (body) options.body = JSON.stringify(body);
+
+        try {
+            // Pointing default relative if hosted on server, otherwise fallback to local java default port
+            const targetUrl = API_BASE_URL.startsWith('http') ? API_BASE_URL + endpoint : "http://localhost:8080/api/crypto" + endpoint;
+
+            const res = await fetch(targetUrl, options);
+            let data;
+
+            const textResponse = await res.text();
+            try {
+                data = textResponse ? JSON.parse(textResponse) : {};
+            } catch (e) {
+                data = { message: textResponse };
+            }
+
+            if (!res.ok) throw new Error(data.message || data.error || `HTTP Error ${res.status}`);
+            return data;
+
+        } catch (error) {
+            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                throw new Error("Network error. Ensure the Spring Boot app is running and CORS is allowed.");
+            }
+            throw error;
+        }
+    }
+
+    async function generateKey() {
+        try {
+            const data = await fetchApi('/key');
+            document.getElementById("aesKey").value = data.key;
+            showToast("New secure key generated!");
+        } catch (error) {
+            showToast(error.message, true);
+        }
+    }
+
+    async function encryptData() {
+        const text = document.getElementById("encryptInput").value.trim();
+        const key = document.getElementById("aesKey").value.trim();
+
+        if (!key) return showToast("Please provide a Secret Key", true);
+        if (!text) return showToast("Please provide Plaintext to encrypt", true);
+
+        const btn = document.getElementById("btn-encrypt");
+        const originalText = btn.innerText;
+        btn.innerText = "Encrypting...";
+        btn.disabled = true;
+
+        try {
+            const data = await fetchApi('/encrypt', { text, key });
+            document.getElementById("encryptOutput").value = data.encrypted;
+            showToast("Encryption successful!");
+        } catch (error) {
+            showToast(error.message, true);
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    async function decryptData() {
+        const encrypted = document.getElementById("decryptInput").value.trim();
+        const key = document.getElementById("aesKey").value.trim();
+
+        if (!key) return showToast("Please provide a Secret Key", true);
+        if (!encrypted) return showToast("Please provide Ciphertext", true);
+
+        const btn = document.getElementById("btn-decrypt");
+        const originalText = btn.innerText;
+        btn.innerText = "Decrypting...";
+        btn.disabled = true;
+
+        try {
+            const data = await fetchApi('/decrypt', { encrypted, key });
+            document.getElementById("decryptOutput").value = data.text;
+            showToast("Decryption successful!");
+        } catch (error) {
+            showToast(error.message, true);
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
+</script>
+</body>
+</html>
