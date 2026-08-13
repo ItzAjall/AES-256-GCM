@@ -21,7 +21,7 @@ public class CryptoController {
         return cryptoService.generateKey();
     }
 
-    @PostMapping("/enctypt")
+    @PostMapping("/encrypt")
     public EncryptResponse encrypt(@RequestBody EncryptRequest request) throws Exception {
         return cryptoService.encrypt(request);
     }
